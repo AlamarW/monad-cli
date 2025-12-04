@@ -88,6 +88,39 @@ These cover the main interface patterns:
 
 This is an exploratory project investigating whether monadic composition can solve real CLI interoperability problems. If it works, it will be used as a daily driver, so practical usability matters as much as theoretical elegance.
 
+## Development Methodology
+
+### Test Driven Development (TDD)
+
+**MANDATORY**: All code must be developed using Test Driven Development.
+
+1. Write a failing test first
+2. Write the minimum code to make the test pass
+3. Refactor based on ETC principles (see below)
+
+No code should be written without a corresponding test written first.
+
+### ETC: Easy To Change
+
+**MANDATORY**: The refactoring phase of TDD must be guided by the ETC principle.
+
+**Core Principle**: Every design decision should be evaluated based on: "How easy will it be for a new person to change this?"
+
+When refactoring, ask:
+- Can a newcomer understand what needs to change?
+- Can they locate where to make the change?
+- Can they make the change without breaking other things?
+- Can they verify their change worked?
+
+**Design for changeability**:
+- Clear module boundaries
+- Explicit dependencies
+- Self-documenting code through types and names
+- Minimal coupling between components
+- Tests that serve as documentation
+
+The goal is not just working code, but code that invites modification by developers who don't yet know the system.
+
 ## Key Architectural Considerations
 
 1. **Performance**: Streaming is essential - can't materialize entire datasets
