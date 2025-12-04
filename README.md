@@ -86,6 +86,32 @@ ghc --version
 stack --version
 ```
 
+### Building and Testing
+
+Build the project:
+```bash
+stack build
+```
+
+Run tests:
+```bash
+# Run all tests
+stack test
+
+# Run tests with verbose output
+stack test --test-arguments "--format=progress"
+
+# Run tests with detailed spec output
+stack test --test-arguments "--color --format=specdoc"
+```
+
+Run the application:
+```bash
+stack run monad-cli '<pipeline-expression>'
+```
+
+**Note**: The first build will take some time as Stack downloads GHC and all dependencies.
+
 ## Technical Details
 
 - **Language**: Haskell
