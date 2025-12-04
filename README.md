@@ -50,10 +50,10 @@ type Pipeline = Stream Record
 
 **Example composition:**
 ```haskell
-find >>= ls           -- adds size, permissions fields
-     >>= grep "error" -- adds matched_line field
-     >>= sortBy "size" -- works on any record with size field
+find "." & ls & grep "error" & sortBy "size"
 ```
+
+Commands compose using the `&` operator (from `Data.Function`), providing a clean, left-to-right flow similar to Unix pipes.
 
 This hybrid approach combines PowerShell's flexible record model with Haskell's type system strength.
 

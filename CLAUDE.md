@@ -54,7 +54,7 @@ type Pipeline = Stream Record
 **Example**:
 ```haskell
 -- find outputs records with "path" field
-find :: Pipeline
+find :: FilePath -> Pipeline
 
 -- ls enriches with size, permissions
 ls :: Pipeline -> Pipeline
@@ -66,21 +66,49 @@ ls = fmap $ \record ->
 -- grep adds matched_line field
 grep :: Text -> Pipeline -> Pipeline
 
--- Composition
-find >>= ls >>= grep "error" >>= sortBy "size"
+-- Composition using & operator
+find "." & ls & grep "error" & sortBy "size"
 ```
+
+## Command Interface Design (RESOLVED)
+
+**Decision**: Commands are plain functions that compose using the `&` operator from `Data.Function`.
+
+```haskell
+-- Commands are functions operating on Pipeline
+find :: FilePath -> Pipeline
+ls :: Pipeline -> Pipeline
+grep :: Text -> Pipeline -> Pipeline
+
+-- Composition uses & (reverse application)
+find "." & ls & grep "error"
+```
+
+**Rationale**:
+- **Simplicity**: Commands are just functions, no complex type wrappers needed
+- **Familiar UX**: `&` provides left-to-right flow like Unix pipes (`|`)
+- **Standard Library**: `&` already exists in `Data.Function` as `flip ($)`
+- **No Learning Curve**: Users don't need to understand monads, arrows, or transformers
+- **Flexibility**: Can still use do-notation for complex flows (Pipeline is a monad)
+
+**User Experience**:
+```haskell
+-- Simple pipeline
+find "." & grep "error"
+
+-- Can still use do-notation for complex logic
+do
+  files <- find "."
+  if needsDetail
+    then ls files & grep "error"
+    else grep "error" files
+```
+
+This provides the best balance of simplicity and power.
 
 ## Open Research Questions
 
-### 1. Command Interface Design
-
-How should commands be represented? Options:
-- Functions: `Command a b` = `Stream a -> Stream b`
-- Monad transformers: `CommandT m a`
-- Free monads: `Free CommandF a`
-- Arrow-based composition
-
-### 2. Error Handling
+### 1. Error Handling
 
 How to handle errors in the pipeline:
 - `ExceptT` transformer for explicit error handling?
@@ -152,8 +180,15 @@ The goal is not just working code, but code that invites modification by develop
 
 ## Notes for Development
 
-- The data model has been decided: `Stream (Map Text Value)` hybrid approach
-- Start implementing commands using the defined data model
+**Resolved Decisions**:
+- Data model: `Stream (Map Text Value)` hybrid approach
+- Command interface: Plain functions composed with `&` operator
+- Both decisions enable implementation to proceed
+
+**Next Steps**:
+- Start implementing commands using the defined data model and interface
+- Commands should be plain functions operating on `Pipeline`
+- Use `&` from `Data.Function` for composition
 - Consider writing example usage code first to validate the design
 - Type signatures will be crucial for ensuring correct composition
 - Tests should verify both correctness and composability
