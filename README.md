@@ -33,6 +33,30 @@ Early exploration phase. The project is investigating:
 
 If successful, this will become a daily driver CLI toolkit.
 
+## Data Model
+
+All commands operate on a unified data type that combines flexibility with type safety:
+
+```haskell
+data Value = VText Text | VInt Int | VPath FilePath | VBool Bool
+type Record = Map Text Value
+type Pipeline = Stream Record
+```
+
+**Design rationale:**
+- **Type Safety**: Pattern matching on `Value` variants provides compile-time guarantees and exhaustiveness checking
+- **Flexibility**: Named fields via `Map Text` allow commands to add information incrementally without breaking the pipeline
+- **Composability**: Commands can work polymorphically on any record containing specific fields
+
+**Example composition:**
+```haskell
+find >>= ls           -- adds size, permissions fields
+     >>= grep "error" -- adds matched_line field
+     >>= sortBy "size" -- works on any record with size field
+```
+
+This hybrid approach combines PowerShell's flexible record model with Haskell's type system strength.
+
 ## Technical Details
 
 - **Language**: Haskell
