@@ -215,6 +215,34 @@ These cover the main interface patterns:
 - **Language**: Haskell
 - **Project Stage**: Exploratory research
 
+### Development Environment Setup
+
+**Automated Setup**: The project includes a `setup.sh` script for installing Haskell development tools.
+
+```bash
+./setup.sh
+```
+
+**What it installs**:
+- **GHCup**: The Haskell toolchain installer
+- **GHC**: The Glasgow Haskell Compiler (recommended version)
+- **Stack**: The Haskell build tool
+
+**After installation**:
+1. Restart your shell or run: `source ~/.ghcup/env`
+2. Verify: `ghc --version && stack --version`
+
+**Manual installation** (if needed):
+```bash
+curl --proto '=https' --tlsv1.2 -sSf https://get-ghcup.haskell.org | sh
+```
+
+**Why GHCup?**
+- Official Haskell toolchain installer
+- Manages multiple GHC versions
+- One-command setup for new developers
+- Cross-platform (Linux, macOS, Windows WSL)
+
 ## Version Control
 
 **Git Ignore Strategy**: Whitelist approach (allow-list, not deny-list)
@@ -229,6 +257,7 @@ The project uses an explicit whitelist `.gitignore` pattern for maximum control:
 !README.md
 !CLAUDE.md
 !.gitignore
+!setup.sh
 !package.yaml
 !stack.yaml
 !src/
