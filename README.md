@@ -40,13 +40,21 @@ All commands operate on a unified data type that combines flexibility with type 
 ```haskell
 data Value = VText Text | VInt Int | VPath FilePath | VBool Bool
 type Record = Map Text Value
-type Pipeline = Stream Record
+
+data ErrorInfo = ErrorInfo
+  { errorCommand :: Text
+  , errorMessage :: Text
+  , errorInput :: Maybe Record
+  }
+
+type Pipeline = Stream (Either ErrorInfo Record)
 ```
 
 **Design rationale:**
 - **Type Safety**: Pattern matching on `Value` variants provides compile-time guarantees and exhaustiveness checking
 - **Flexibility**: Named fields via `Map Text` allow commands to add information incrementally without breaking the pipeline
 - **Composability**: Commands can work polymorphically on any record containing specific fields
+- **Error Handling**: `Either ErrorInfo Record` provides explicit, type-safe error handling with short-circuit semantics
 
 **Example composition:**
 ```haskell
@@ -61,4 +69,5 @@ This hybrid approach combines PowerShell's flexible record model with Haskell's 
 
 - **Language**: Haskell
 - **Build System**: Stack
+- **Architecture**: Modular monolith with strict boundaries between commands for maintainability
 - **Target Commands**: Starting with basic file operations (ls, find, grep, cat, etc.)
