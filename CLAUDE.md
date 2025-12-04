@@ -150,6 +150,52 @@ type Pipeline = Stream (Either ErrorInfo Record)
 - First error encountered stops execution
 - Final output indicates success with results or failure with error details
 
+## Architecture: Modular Monolith (RESOLVED)
+
+**Decision**: Structure the codebase as a modular monolith with strict module boundaries.
+
+**Module Organization**:
+
+```
+monad-cli/
+├── Core/
+│   ├── Types.hs        -- Value, Record, ErrorInfo, Pipeline
+│   └── ...
+├── Commands/
+│   ├── Find.hs         -- Independent, only imports Core.Types
+│   ├── Ls.hs           -- Independent, only imports Core.Types
+│   ├── Grep.hs         -- Independent, only imports Core.Types
+│   └── Cat.hs          -- Independent, only imports Core.Types
+├── Parser/
+│   └── ...             -- Parse pipeline expressions
+├── Runtime/
+│   └── ...             -- Execute pipelines
+└── Main.hs
+```
+
+**Constraints**:
+- **Commands are independent**: Each command is a separate module
+- **No cross-command dependencies**: Commands cannot import or depend on other command logic
+- **Shared infrastructure only**: Commands may only import:
+  - Core types (Value, Record, Pipeline, ErrorInfo)
+  - Shared infrastructure (Parser, Runtime/Executor)
+- **Complete isolation**: A command's implementation details are private to its module
+
+**Rationale**:
+- **Easy to Change**: Clear boundaries make it obvious where to modify functionality (aligns with ETC principle)
+- **Easy to Test**: Each command can be tested in complete isolation
+- **Potential Extraction**: While not the goal, commands could be extracted as separate packages if needed
+- **Prevents Coupling**: Enforced independence prevents hidden dependencies and coupling between commands
+- **Mental Model**: Each command is a self-contained unit that speaks the common Pipeline language
+
+**Benefits for Development**:
+- Newcomers can understand and modify one command without understanding others
+- Tests for one command don't require understanding other commands
+- Changes to one command cannot break others (except via core type changes)
+- Clear ownership and responsibility boundaries
+
+This is the best way to design this system for long-term maintainability and changeability.
+
 ## Initial Implementation Targets
 
 Start with these commands to prove the concept:
@@ -220,6 +266,7 @@ The goal is not just working code, but code that invites modification by develop
 - **Command interface**: Plain functions composed with `&` operator
 - **Error handling**: `Either` monad with short-circuit semantics (no silent failures)
 - **CLI usage model**: Compiled binary accepting pipeline expressions as strings (REPL possible future)
+- **Architecture**: Modular monolith with strict module boundaries (commands are independent)
 - All foundational decisions are complete - implementation can proceed
 
 **Next Steps**:

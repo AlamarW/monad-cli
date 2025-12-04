@@ -69,4 +69,5 @@ This hybrid approach combines PowerShell's flexible record model with Haskell's 
 
 - **Language**: Haskell
 - **Build System**: Stack
+- **Architecture**: Modular monolith with strict boundaries between commands for maintainability
 - **Target Commands**: Starting with basic file operations (ls, find, grep, cat, etc.)
