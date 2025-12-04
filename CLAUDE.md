@@ -29,28 +29,50 @@ Use Haskell's type system and monads to create a unified interface where:
 2. Commands compose using monadic bind (`>>=`) or do-notation
 3. The type system ensures correct composition
 
+## Data Model (RESOLVED)
+
+**Decision**: Hybrid approach combining PowerShell-style records with Haskell type safety.
+
+```haskell
+data Value = VText Text | VInt Int | VPath FilePath | VBool Bool
+type Record = Map Text Value
+type Pipeline = Stream Record
+```
+
+**Rationale**:
+- **Type Safety**: `Value` sum type enables pattern matching, exhaustiveness checking, and compile-time guarantees
+- **Flexibility**: `Map Text Value` allows commands to add fields incrementally without breaking downstream commands
+- **Composability**: Commands can work polymorphically on any record containing specific typed fields
+- **Extensibility**: New `Value` variants can be added as needed for future command types
+
+**How commands use this model**:
+1. Commands read from `Pipeline` (Stream of Records)
+2. Commands transform/filter/enrich records
+3. Commands output to `Pipeline`
+4. Type system ensures field values match expected types
+
+**Example**:
+```haskell
+-- find outputs records with "path" field
+find :: Pipeline
+
+-- ls enriches with size, permissions
+ls :: Pipeline -> Pipeline
+ls = fmap $ \record ->
+  case Map.lookup "path" record of
+    Just (VPath p) -> enrichWithFileInfo p record
+    _ -> record
+
+-- grep adds matched_line field
+grep :: Text -> Pipeline -> Pipeline
+
+-- Composition
+find >>= ls >>= grep "error" >>= sortBy "size"
+```
+
 ## Open Research Questions
 
-### 1. Data Model (CRITICAL - UNRESOLVED)
-
-**Question**: What should be the common type that all commands operate on?
-
-**Options to consider**:
-- `Stream FilePath` - Simple, but limited to file operations
-- `Stream Text` - General but loses structure
-- `Stream Value` where `Value` is a sum type (files, text, numbers, records, etc.)
-- `Stream (Map Text Value)` - Structured records like PowerShell objects
-- Something else entirely
-
-**Constraints**:
-- Must support file operations (ls, find)
-- Must support text operations (grep, sed, awk)
-- Must support data transformation (cut, sort, uniq)
-- Should be extensible for future command types
-
-**Current Status**: Undecided. This is the foundational design decision.
-
-### 2. Command Interface Design
+### 1. Command Interface Design
 
 How should commands be represented? Options:
 - Functions: `Command a b` = `Stream a -> Stream b`
@@ -58,7 +80,7 @@ How should commands be represented? Options:
 - Free monads: `Free CommandF a`
 - Arrow-based composition
 
-### 3. Error Handling
+### 2. Error Handling
 
 How to handle errors in the pipeline:
 - `ExceptT` transformer for explicit error handling?
@@ -130,7 +152,8 @@ The goal is not just working code, but code that invites modification by develop
 
 ## Notes for Development
 
-- The data model decision should be made before implementing commands
+- The data model has been decided: `Stream (Map Text Value)` hybrid approach
+- Start implementing commands using the defined data model
 - Consider writing example usage code first to validate the design
 - Type signatures will be crucial for ensuring correct composition
 - Tests should verify both correctness and composability
