@@ -1,0 +1,38 @@
+# Whitelist approach: Deny everything by default, explicitly allow what should be tracked
+# This ensures we only commit what we intend to commit
+
+# Ignore everything
+*
+
+# Explicitly allow documentation
+!README.md
+!CLAUDE.md
+!.gitignore
+!LICENSE
+!CHANGELOG.md
+
+# Explicitly allow setup scripts
+!setup.sh
+
+# Explicitly allow Stack configuration
+!package.yaml
+!stack.yaml
+!stack.yaml.lock
+
+# Explicitly allow source directories and their contents
+!src/
+!src/Core/
+!src/Commands/
+!src/Parser/
+!src/Runtime/
+!src/**/*.hs
+
+!app/
+!app/**/*.hs
+
+!test/
+!test/Core/
+!test/**/*.hs
+
+# Explicitly allow other Haskell project files
+!*.cabal
