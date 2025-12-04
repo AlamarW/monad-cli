@@ -65,9 +65,31 @@ Commands compose using the `&` operator (from `Data.Function`), providing a clea
 
 This hybrid approach combines PowerShell's flexible record model with Haskell's type system strength.
 
+## Getting Started
+
+### Development Setup
+
+Install Haskell development tools (GHC and Stack) using the provided setup script:
+
+```bash
+./setup.sh
+```
+
+After installation, restart your shell or run:
+```bash
+source ~/.ghcup/env
+```
+
+Verify installation:
+```bash
+ghc --version
+stack --version
+```
+
 ## Technical Details
 
 - **Language**: Haskell
 - **Build System**: Stack
 - **Architecture**: Modular monolith with strict boundaries between commands for maintainability
+- **Version Control**: Whitelist-style .gitignore for explicit control over tracked files
 - **Target Commands**: Starting with basic file operations (ls, find, grep, cat, etc.)
