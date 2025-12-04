@@ -36,7 +36,14 @@ Use Haskell's type system and monads to create a unified interface where:
 ```haskell
 data Value = VText Text | VInt Int | VPath FilePath | VBool Bool
 type Record = Map Text Value
-type Pipeline = Stream Record
+
+data ErrorInfo = ErrorInfo
+  { errorCommand :: Text
+  , errorMessage :: Text
+  , errorInput :: Maybe Record
+  } deriving (Show)
+
+type Pipeline = Stream (Either ErrorInfo Record)
 ```
 
 **Rationale**:
@@ -44,29 +51,34 @@ type Pipeline = Stream Record
 - **Flexibility**: `Map Text Value` allows commands to add fields incrementally without breaking downstream commands
 - **Composability**: Commands can work polymorphically on any record containing specific typed fields
 - **Extensibility**: New `Value` variants can be added as needed for future command types
+- **Error Handling**: `Either ErrorInfo Record` provides explicit error handling with short-circuit semantics (first error stops the pipeline)
 
 **How commands use this model**:
-1. Commands read from `Pipeline` (Stream of Records)
-2. Commands transform/filter/enrich records
-3. Commands output to `Pipeline`
-4. Type system ensures field values match expected types
+1. Commands read from `Pipeline` (Stream of Either ErrorInfo Record)
+2. Commands pattern match on `Left` (error) or `Right` (success)
+3. Commands transform/filter/enrich successful records
+4. Commands propagate errors or produce new errors
+5. Type system ensures field values match expected types
 
 **Example**:
 ```haskell
 -- find outputs records with "path" field
 find :: FilePath -> Pipeline
 
--- ls enriches with size, permissions
+-- ls enriches with size, permissions, handles errors
 ls :: Pipeline -> Pipeline
-ls = fmap $ \record ->
-  case Map.lookup "path" record of
-    Just (VPath p) -> enrichWithFileInfo p record
-    _ -> record
+ls = fmap $ \eitherRecord ->
+  case eitherRecord of
+    Left err -> Left err  -- Propagate errors
+    Right record ->
+      case Map.lookup "path" record of
+        Just (VPath p) -> Right $ enrichWithFileInfo p record
+        _ -> Left $ ErrorInfo "ls" "Missing path field" (Just record)
 
 -- grep adds matched_line field
 grep :: Text -> Pipeline -> Pipeline
 
--- Composition using & operator
+-- Composition using & operator (errors short-circuit)
 find "." & ls & grep "error" & sortBy "size"
 ```
 
@@ -89,31 +101,54 @@ find "." & ls & grep "error"
 - **Familiar UX**: `&` provides left-to-right flow like Unix pipes (`|`)
 - **Standard Library**: `&` already exists in `Data.Function` as `flip ($)`
 - **No Learning Curve**: Users don't need to understand monads, arrows, or transformers
-- **Flexibility**: Can still use do-notation for complex flows (Pipeline is a monad)
 
-**User Experience**:
-```haskell
--- Simple pipeline
-find "." & grep "error"
+## CLI Usage Model (RESOLVED)
 
--- Can still use do-notation for complex logic
-do
-  files <- find "."
-  if needsDetail
-    then ls files & grep "error"
-    else grep "error" files
+**Primary Model**: Compiled binary with command-line arguments
+
+```bash
+monad-cli 'find "." & ls & grep "error"'
 ```
 
-This provides the best balance of simplicity and power.
+Users pass pipeline expressions as strings. The tool parses and executes them.
 
-## Open Research Questions
+**Future Possibility**: REPL/Interactive shell
 
-### 1. Error Handling
+```bash
+$ monad-cli
+> find "." & ls & grep "error"
+[results...]
+>
+```
 
-How to handle errors in the pipeline:
-- `ExceptT` transformer for explicit error handling?
-- Follow Unix tradition of silent failures?
-- Structured error types?
+An interactive shell could be added with minimal additional cost.
+
+## Error Handling (RESOLVED)
+
+**Decision**: Use `Either ErrorInfo Record` with short-circuit semantics.
+
+```haskell
+data ErrorInfo = ErrorInfo
+  { errorCommand :: Text
+  , errorMessage :: Text
+  , errorInput :: Maybe Record
+  } deriving (Show)
+
+type Pipeline = Stream (Either ErrorInfo Record)
+```
+
+**Rationale**:
+- **No Silent Failures**: Errors are explicit and visible
+- **Type Safety**: Compiler enforces error handling via `Either`
+- **Short-Circuit**: First error stops pipeline execution (clear failure semantics)
+- **Informative**: `ErrorInfo` captures what failed, why, and the input context
+- **Haskell-Idiomatic**: Leverages standard Either monad for error handling
+
+**Behavior**:
+- Commands pattern match on `Left` (error) or `Right` (success)
+- Errors propagate through the pipeline automatically
+- First error encountered stops execution
+- Final output indicates success with results or failure with error details
 
 ## Initial Implementation Targets
 
@@ -181,14 +216,17 @@ The goal is not just working code, but code that invites modification by develop
 ## Notes for Development
 
 **Resolved Decisions**:
-- Data model: `Stream (Map Text Value)` hybrid approach
-- Command interface: Plain functions composed with `&` operator
-- Both decisions enable implementation to proceed
+- **Data model**: `Stream (Either ErrorInfo (Map Text Value))` hybrid approach with explicit error handling
+- **Command interface**: Plain functions composed with `&` operator
+- **Error handling**: `Either` monad with short-circuit semantics (no silent failures)
+- **CLI usage model**: Compiled binary accepting pipeline expressions as strings (REPL possible future)
+- All foundational decisions are complete - implementation can proceed
 
 **Next Steps**:
 - Start implementing commands using the defined data model and interface
-- Commands should be plain functions operating on `Pipeline`
+- Commands should be plain functions operating on `Pipeline = Stream (Either ErrorInfo Record)`
 - Use `&` from `Data.Function` for composition
+- All commands must handle errors explicitly (pattern match on Left/Right)
 - Consider writing example usage code first to validate the design
 - Type signatures will be crucial for ensuring correct composition
-- Tests should verify both correctness and composability
+- Tests should verify both correctness, composability, and error handling
