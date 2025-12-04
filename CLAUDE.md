@@ -215,6 +215,34 @@ These cover the main interface patterns:
 - **Language**: Haskell
 - **Project Stage**: Exploratory research
 
+## Version Control
+
+**Git Ignore Strategy**: Whitelist approach (allow-list, not deny-list)
+
+The project uses an explicit whitelist `.gitignore` pattern for maximum control:
+
+```gitignore
+# Ignore everything by default
+*
+
+# Explicitly allow what should be tracked
+!README.md
+!CLAUDE.md
+!.gitignore
+!package.yaml
+!stack.yaml
+!src/
+!src/**
+!test/
+!test/**
+```
+
+**Rationale**:
+- **Explicit Control**: Must consciously decide what belongs in the repository
+- **Prevents Accidents**: Nothing gets accidentally committed
+- **Clean Repository**: Only intentional files are tracked
+- **Easy to Change**: Adding new files requires updating .gitignore (makes you think about what you're adding)
+
 ## Development Philosophy
 
 This is an exploratory project investigating whether monadic composition can solve real CLI interoperability problems. If it works, it will be used as a daily driver, so practical usability matters as much as theoretical elegance.

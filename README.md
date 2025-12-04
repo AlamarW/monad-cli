@@ -70,4 +70,5 @@ This hybrid approach combines PowerShell's flexible record model with Haskell's 
 - **Language**: Haskell
 - **Build System**: Stack
 - **Architecture**: Modular monolith with strict boundaries between commands for maintainability
+- **Version Control**: Whitelist-style .gitignore for explicit control over tracked files
 - **Target Commands**: Starting with basic file operations (ls, find, grep, cat, etc.)
